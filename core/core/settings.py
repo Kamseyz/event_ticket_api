@@ -28,6 +28,12 @@ INSTALLED_APPS = [
     
     # django drf app
     "rest_framework",
+    
+    #my django apps
+    'booking',
+    'events',
+    'payment',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -116,3 +122,8 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+
+#django customize users
+AUTH_USER_MODEL='users.User'
