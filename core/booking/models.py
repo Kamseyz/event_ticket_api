@@ -33,5 +33,5 @@ class Booking(models.Model):
         if self.quantity <=0:
             raise ValueError("Quantity must be at least 1")
         if not self.booking_reference:
-            self.booking_reference=self.generate_reference
+            self.booking_reference=self.generate_reference()
         super().save(*args, **kwargs)

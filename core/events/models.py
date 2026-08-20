@@ -19,7 +19,7 @@ class Event(models.Model):
     def clean(self):
         if self.end_time <= self.start_time:
             raise ValidationError("End time must be after start time.")
-        return super().clean()
+        super().clean()
     
     
     
@@ -31,9 +31,13 @@ class TicketTier(models.Model):
     capacity = models.PositiveIntegerField(help_text="Total tickets available for this specific tier")
     tickets_sold = models.PositiveIntegerField(default=0, help_text="Track sales to prevent overselling")
 
+
     @property
     def remaining_tickets(self):
+        if self.capacity is None:
+            return 0
         return max(0, self.capacity - self.tickets_sold)
-
+    
+    
     def __str__(self):
         return f"{self.event.title} - {self.name} (₦{self.price})"
