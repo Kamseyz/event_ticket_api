@@ -1,5 +1,8 @@
 from pathlib import Path
 from datetime import timedelta
+from decouple import config,Csv
+from corsheaders.defaults import default_headers
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,12 +12,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-f#kfu&t-eestw9(x*hhs=#^5q(+rs4un1jim_+=$0g0fpi5l22'
+SECRET_KEY = config("SECRET_KEY", default="django-insecure-automatic-fallback-for-testing")
+
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=False, cast=bool)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 
-ALLOWED_HOSTS = []
+
 
 
 # Application definition
@@ -32,6 +38,15 @@ INSTALLED_APPS = [
     
     #simple jwt app
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    
+    #djoser
+    'djoser',
+    
+    
+    
+    #django anymail(it connect your django app to extenal sms application like brevo or resend etc)
+    "anymail",
     
     #my django apps
     'booking',
@@ -42,16 +57,33 @@ INSTALLED_APPS = [
     
     #drf spectular
     'drf_spectacular',
+    
+    #django silk 
+    'silk',
+    
+    #django allauth cors
+    "corsheaders",
 ]
+
+
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    
+    #cors header
+    "corsheaders.middleware.CorsMiddleware",
+    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    #django silk middleware
+    'silk.middleware.SilkyMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -120,17 +152,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
-
-
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
-
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
 
 
 #django customize users
@@ -145,55 +167,52 @@ REST_FRAMEWORK = {
     
     #drf spectular 
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    
+    #throlling settings
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/minute',
+        'user': '60/minute',
+        'auth_lock': '5/minute',
+    }
+
 }
+
+
+
+#djoser settings
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': False,
+    'SEND_ACTIVATION_EMAIL': False,           #change to true before production
+    'ACTIVATION_URL': 'account/verify-email/{uid}/{token}',  # matches your FRONTEND_URL pattern
+    'PASSWORD_RESET_CONFIRM_URL': 'account/password/reset/confirm/{uid}/{token}',
+    'EMAIL_FRONTEND_PROTOCOL': 'https' if not DEBUG else 'http',
+    'EMAIL_FRONTEND_DOMAIN': 'abc.xyc',  #change it to your frontend domain
+    'EMAIL_FRONTEND_SITE_NAME': 'PAIN EVENT TICKETING API', 
+    'SERIALIZERS': {},
+}
+
+
+
 
 #simple jwt settings
 
-# SIMPLE_JWT = {
-#     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-#     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-#     "ROTATE_REFRESH_TOKENS": False,
-#     "BLACKLIST_AFTER_ROTATION": False,
-#     "UPDATE_LAST_LOGIN": False,
+SIMPLE_JWT = {
+    #djoer jwt 
+    'AUTH_HEADER_TYPES': ('JWT',),
+    #other jwt settings
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+}
 
-#     "ALGORITHM": "HS256",
-#     "SIGNING_KEY": settings.SECRET_KEY,
-#     "VERIFYING_KEY": "",
-#     "AUDIENCE": None,
-#     "ISSUER": None,
-#     "JSON_ENCODER": None,
-#     "JWK_URL": None,
-#     "LEEWAY": 0,
-
-#     "AUTH_HEADER_TYPES": ("Bearer",),
-#     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-#     "USER_ID_FIELD": "id",
-#     "USER_ID_CLAIM": "user_id",
-#     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-#     "ON_LOGIN_SUCCESS": "rest_framework_simplejwt.serializers.default_on_login_success",
-#     "ON_LOGIN_FAILED": "rest_framework_simplejwt.serializers.default_on_login_failed",
-
-#     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-#     "TOKEN_TYPE_CLAIM": "token_type",
-#     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-
-#     "JTI_CLAIM": "jti",
-
-#     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-#     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
-#     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
-
-#     "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
-#     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
-#     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
-#     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
-#     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
-#     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
-
-#     "CHECK_REVOKE_TOKEN": False,
-#     "REVOKE_TOKEN_CLAIM": "hash_password",
-#     "CHECK_USER_IS_ACTIVE": True,
-# }
 
 
 #drf sepctular settings
@@ -202,5 +221,28 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'An API to browse events, booking tickets and making payment with Paystack',
     'VERSION': '1.0.0',
 }
+
+ 
+
+
+# change CORS_ALLOWED_ORIGINS to your frontend's URL
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+] 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+)
+
+
+
+#anymail settings
+ANYMAIL = {
+    "BREVO_API_KEY": config("BREVO_API_KEY"), # add your secret key in the .env too 
+}
+
+EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL") #in your env make sure it matches your sender email e.g noreply@pain.com
 
 
