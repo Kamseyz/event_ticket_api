@@ -8,6 +8,8 @@ add sentry and logging by default
 look for a pacakge for 2fa
 add a system desgin in your readme.md
 set up djoser oauth( pip install -U social-auth-app-django) look up djoser page for more info 
+check notion for others
+learn router with ai
 
 use ai to give you a read me for this as you are using django allauth so people that want to plug it to their react , react native , vue and others can do it easily 
 Yes, it plug-and-plays across any platform. Because standard JWT endpoints return raw JSON ({ "access": "...", "refresh": "..." }), any frontend platform (React, React Native, Vue, Flutter, Svelte, iOS/Android) can consume them out of the box.
