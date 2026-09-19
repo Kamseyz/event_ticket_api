@@ -17,6 +17,9 @@ urlpatterns = [
     re_path(r'^auth/', include('djoser.urls')),
     re_path(r'^auth/', include('djoser.urls.jwt')),
     
+    #my own installed apps
+    path("", include("events.urls")),
+    
     
     #django silk url
     path('silk/', include('silk.urls', namespace='silk')),

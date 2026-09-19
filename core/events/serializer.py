@@ -14,7 +14,7 @@ class TicketTierSerializers(serializers.ModelSerializer):
         
         
 
-#event serializer(show the users the different type of events)
+#event serializer (Converts Event records into complete JSON data to show the user)
 class EventSerializers(serializers.ModelSerializer):
     
     #if take note i passed many=true cause i have nested serializer repesentation
@@ -35,6 +35,16 @@ class CreateEventSerializer(serializers.ModelSerializer):
     class Meta:
         model= Event
         fields=['title', 'description', 'location' , 'start_time', 'end_time', 'ticket_tiers']
+    
+    #to make sure the end time doesnt begin before the start time
+    def validate(self, attrs):
+        start_time = attrs.get('start_time')
+        end_time = attrs.get('end_time')
+        
+        if start_time and end_time and end_time <= start_time:
+            raise serializers.ValidationError("End time must be after start time")
+        return attrs
+    
 
 
 #update event(admin only)
@@ -44,3 +54,11 @@ class UpdateEventSerializer(serializers.ModelSerializer):
         model= Event
         fields=['title', 'description', 'location' , 'start_time', 'end_time']
         extra_kwargs = {field: {'required': False} for field in fields}
+        
+    #to make sure the end time doesnt begin before the start time
+    def validate(self, attrs):
+        start_time = attrs.get('start_time', getattr(self.instance, 'start_time', None))
+        end_time = attrs.get('end_time', getattr(self.instance, 'end_time', None))
+        if start_time and end_time and end_time <= start_time:
+            raise serializers.ValidationError("End time must be after start time")
+        return attrs

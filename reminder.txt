@@ -1,4 +1,20 @@
+before leaving phase 1,2,3 and 4 check the query with django silk and see if to use preselect or prefetch
+write test for each phase
+
+
+
+TODO (Phase 5 polish, not urgent):
+Refactor Events app to use DRF ViewSet + Router instead of separate 
+APIView classes with verb-based URLs (/events/create/, /events/1/update/).
+
+Goal: one path per resource (/events/ and /events/<id>/), where the 
+HTTP method (GET/POST/PATCH/DELETE) determines the action — not the URL 
+itself. This is the "proper" RESTful convention. Not broken as-is, 
+just not idiomatic yet. 
+
+
 don't forget to work on the ticker tier capacity
+add pagination in the show/list events
 add django axes
 do indexex for your database check it out, 
 add loctus
