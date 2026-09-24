@@ -9,3 +9,4 @@ django-silk==5.5.2
 django-cors-headers==4.9.0
 djoser==2.3.4
 psycopg2-binary==2.9.13
+gunicorn==23.0.0

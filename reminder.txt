@@ -1,6 +1,8 @@
 before leaving phase 1,2,3 and 4 check the query with django silk and see if to use preselect or prefetch
 write test for each phase
 
+afte dockerizing dont forget to add with.atomic and select_upadte 
+
 
 
 TODO (Phase 5 polish, not urgent):

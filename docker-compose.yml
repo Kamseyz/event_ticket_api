@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: event_api
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-event_api_db}
+      POSTGRES_USER: ${DB_USER:-event_api_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Publish on HOST port 5433, not 5432.
+    # Your machine already runs a snap-managed PostgreSQL 16 holding
+    # 127.0.0.1:5432, so binding 5432 here would fail with "address already in
+    # use". 5433 also matches DB_PORT=5433 in your .env, which is what host-side
+    # commands (pytest, manage.py) use.
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:8-alpine
+    container_name: event_api_redis
+    restart: always
+    command: redis-server --appendonly no
+    # no ports needed — only the web container talks to it over the internal network
+
+  web:
+    build: .
+    container_name: event_api_web
+    restart: always
+    # manage.py lives in core/, not at the repo root.
+    working_dir: /app/core
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - .:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    # These OVERRIDE .env (compose `environment` beats `env_file`).
+    #
+    # Inside this container "localhost" is the container itself, so .env's
+    # DB_HOST=localhost could never reach the database. On the compose network
+    # the db service is reachable by its service name, "db", on 5432 --
+    # the container's internal port, NOT the 5433 published on the host.
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+
