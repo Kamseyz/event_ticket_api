@@ -19,6 +19,7 @@ urlpatterns = [
     
     #my own installed apps
     path("", include("events.urls")),
+    path("", include("booking.urls")),
     
     
     #django silk url
