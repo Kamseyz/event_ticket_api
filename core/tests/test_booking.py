@@ -284,6 +284,15 @@ def test_concurrent_bookings_never_oversell():
     # Every accepted booking is one ticket, so these must line up.
     assert accepted == sold, f"ACCEPTED/SOLD MISMATCH: {context}"
 
+    # ...and the tier must actually SELL OUT.
+    #
+    # This assertion matters more than it looks. Everything above is satisfied
+    # by "0 sold" -- so without these two lines the test would also pass if the
+    # fix broke booking entirely (over-locking, deadlocks, everything rejected).
+    # Proving the invariant is not enough; the happy path has to still work.
+    assert accepted == capacity, f"CAPACITY NOT SATURATED: {context}"
+    assert sold == capacity, f"CAPACITY NOT SATURATED: {context}"
+
 
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_bookings_leave_no_bookings_when_tier_is_full():
